@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞行器静态展示环境</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        
+        #app {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 300;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn.primary {
+            background: #2196F3;
+            border-color: #1976D2;
+        }
+        
+        .btn.success {
+            background: #4CAF50;
+            border-color: #45a049;
+        }
+        
+        .content {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 300;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+        
+        .preset-list {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .preset-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .preset-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .preset-item.active {
+            background: rgba(33, 150, 243, 0.3);
+            border-color: #2196F3;
+        }
+        
+        .preset-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preset-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .preset-desc {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .component-controls {
+            margin-top: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #2196F3;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .viewer {
+            flex: 1;
+            position: relative;
+        }
+        
+        #static-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .stats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 400px;
+        }
+        
+        .display-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .nav-buttons {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .aircraft-info {
+            position: absolute;
+            top: 60px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>✈️ 飞行器静态展示环境</h1>
+            <div class="controls">
+                <button class="btn" onclick="clearAircraft()">清除飞机</button>
+                <button class="btn primary" onclick="loadPreset('basic')">加载基础飞机</button>
+                <button class="btn success" onclick="loadPreset('advanced')">加载高级飞机</button>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="sidebar">
+                <h2>🎯 预设配置</h2>
+                <div class="preset-list" id="preset-list">
+                    <!-- 预设列表将通过JavaScript动态生成 -->
+                </div>
+                
+                <h2>🎨 显示设置</h2>
+                <div class="display-settings">
+                    <div class="control-group">
+                        <label class="control-label">环境光强度:</label>
+                        <input type="range" class="slider" id="ambient-light" min="0" max="1" step="0.1" value="0.6" onchange="updateLighting()">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">方向光强度:</label>
+                        <input type="range" class="slider" id="directional-light" min="0" max="1" step="0.1" value="0.8" onchange="updateLighting()">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">背景亮度:</label>
+                        <input type="range" class="slider" id="background-brightness" min="0" max="1" step="0.1" value="0.7" onchange="updateBackground()">
+                    </div>
+                </div>
+                
+                <h2>📐 组件控制</h2>
+                <div class="component-controls" id="component-controls">
+                    <!-- 组件控制将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <div class="viewer">
+                <div id="static-canvas"></div>
+                
+                <div class="stats" id="stats">
+                    FPS: 60.0<br>
+                    组件数量: 0<br>
+                    渲染模式: 静态
+                </div>
+                
+                <div class="aircraft-info" id="aircraft-info">
+                    <strong>飞机信息:</strong><br>
+                    未加载飞机
+                </div>
+                
+                <div class="instructions">
+                    <strong>操作指南:</strong><br>
+                    • 鼠标左键: 旋转视角<br>
+                    • 鼠标右键: 平移视角<br>
+                    • 鼠标滚轮: 缩放<br>
+                    • G键: 切换网格显示<br>
+                    • R键: 重置相机<br>
+                    • 空格键: 切换自动旋转
+                </div>
+                
+                <div class="display-controls">
+                    <div>显示控制</div>
+                    <button class="btn" onclick="toggleGrid()">切换网格</button>
+                    <button class="btn" onclick="toggleAxes()">切换坐标轴</button>
+                    <button class="btn" onclick="toggleAutoRotate()">自动旋转</button>
+                </div>
+                
+                <div class="nav-buttons">
+                    <button class="btn" onclick="goToPhysicsView()">切换到物理视图</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { StaticEnvironment } from '../interfaces/static-environment/static-scene.js';
+        import { Fuselage } from '../core/aircraft-components/fuselage.js';
+        import { Wing } from '../core/aircraft-components/wing.js';
+        import { Engine } from '../core/aircraft-components/engine.js';
+
+        class StaticShowcase {
+            constructor() {
+                this.canvas = document.getElementById('static-canvas');
+                this.environment = null;
+                this.currentAircraft = null;
+                this.autoRotate = false;
+                this.autoRotateSpeed = 0.5;
+                
+                this.init();
+            }
+
+            async init() {
+                this.environment = new StaticEnvironment(this.canvas);
+                this.setupUI();
+                this.environment.animate();
+                
+                // 加载默认预设
+                this.loadPreset('basic');
+            }
+
+            setupUI() {
+                this.populatePresetList();
+                this.setupEventListeners();
+            }
+
+            populatePresetList() {
+                const presetList = document.getElementById('preset-list');
+                const presets = [
+                    { 
+                        id: 'basic', 
+                        name: '基础飞机', 
+                        desc: '简单的单引擎飞机', 
+                        icon: '✈️',
+                        color: '#4CAF50'
+                    },
+                    { 
+                        id: 'advanced', 
+                        name: '高级飞机', 
+                        desc: '双引擎商用飞机', 
+                        icon: '🛩️',
+                        color: '#2196F3'
+                    },
+                    { 
+                        id: 'fighter', 
+                        name: '战斗机', 
+                        desc: '高性能军用飞机', 
+                        icon: '🚀',
+                        color: '#F44336'
+                    },
+                    { 
+                        id: 'custom', 
+                        name: '自定义', 
+                        desc: '手动配置组件', 
+                        icon: '🔧',
+                        color: '#FF9800'
+                    }
+                ];
+
+                presets.forEach(preset => {
+                    const item = document.createElement('div');
+                    item.className = 'preset-item';
+                    item.innerHTML = `
+                        <div class="preset-icon" style="background: ${preset.color}">${preset.icon}</div>
+                        <div class="preset-name">${preset.name}</div>
+                        <div class="preset-desc">${preset.desc}</div>
+                    `;
+                    item.onclick = () => this.loadPreset(preset.id);
+                    presetList.appendChild(item);
+                });
+            }
+
+            setupEventListeners() {
+                window.addEventListener('keydown', (e) => this.onKeyDown(e));
+                
+                // 空格键切换自动旋转
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.toggleAutoRotate();
+                    }
+                });
+            }
+
+            onKeyDown(event) {
+                switch(event.key) {
+                    case 'g': case 'G':
+                        this.environment.groundPlane.toggleGrid();
+                        break;
+                    case 'r': case 'R':
+                        this.environment.cameraController.setCameraPosition(0, 10, 20);
+                        break;
+                }
+            }
+
+            loadPreset(presetId) {
+                this.clearAircraft();
+                
+                switch(presetId) {
+                    case 'basic':
+                        this.createBasicAircraft();
+                        break;
+                    case 'advanced':
+                        this.createAdvancedAircraft();
+                        break;
+                    case 'fighter':
+                        this.createFighterAircraft();
+                        break;
+                    case 'custom':
+                        this.createCustomAircraft();
+                        break;
+                }
+                
+                this.updateAircraftInfo();
+                this.updatePresetSelection(presetId);
+            }
+
+            createBasicAircraft() {
+                this.currentAircraft = [];
+                
+                // 创建机身
+                const fuselage = new Fuselage({ length: 8, width: 1.5, height: 1.5 });
+                fuselage.setPosition(0, 2, 0);
+                this.environment.addComponent(fuselage);
+                this.currentAircraft.push(fuselage);
+                
+                // 创建主翼
+                const mainWing = new Wing({ span: 12, chord: 2 });
+                mainWing.setPosition(0, 2.2, 0);
+                this.environment.addComponent(mainWing);
+                this.currentAircraft.push(mainWing);
+                
+                // 创建尾翼
+                const tailWing = new Wing({ span: 4, chord: 1.5 });
+                tailWing.setPosition(0, 2.5, -3);
+                this.environment.addComponent(tailWing);
+                this.currentAircraft.push(tailWing);
+                
+                // 创建引擎
+                const engine = new Engine({ thrust: 800, diameter: 0.8, length: 2 });
+                engine.setPosition(0, 1.5, 3);
+                this.environment.addComponent(engine);
+                this.currentAircraft.push(engine);
+            }
+
+            createAdvancedAircraft() {
+                this.currentAircraft = [];
+                
+                // 创建机身
+                const fuselage = new Fuselage({ length: 15, width: 2, height: 2 });
+                fuselage.setPosition(0, 3, 0);
+                this.environment.addComponent(fuselage);
+                this.currentAircraft.push(fuselage);
+                
+                // 创建主翼
+                const mainWing = new Wing({ span: 20, chord: 3 });
+                mainWing.setPosition(0, 3.2, 0);
+                this.environment.addComponent(mainWing);
+                this.currentAircraft.push(mainWing);
+                
+                // 创建尾翼
+                const tailWing = new Wing({ span: 6, chord: 2 });
+                tailWing.setPosition(0, 3.8, -6);
+                this.environment.addComponent(tailWing);
+                this.currentAircraft.push(tailWing);
+                
+                // 创建双引擎
+                const engine1 = new Engine({ thrust: 1200, diameter: 1, length: 3 });
+                engine1.setPosition(4, 2.5, 2);
+                this.environment.addComponent(engine1);
+                this.currentAircraft.push(engine1);
+                
+                const engine2 = new Engine({ thrust: 1200, diameter: 1, length: 3 });
+                engine2.setPosition(-4, 2.5, 2);
+                this.environment.addComponent(engine2);
+                this.currentAircraft.push(engine2);
+            }
+
+            createFighterAircraft() {
+                this.currentAircraft = [];
+                
+                // 创建机身（更流线型）
+                const fuselage = new Fuselage({ length: 10, width: 1, height: 1.2 });
+                fuselage.setPosition(0, 2.5, 0);
+                this.environment.addComponent(fuselage);
+                this.currentAircraft.push(fuselage);
+                
+                // 创建三角翼
+                const deltaWing = new Wing({ span: 8, chord: 6, sweepAngle: Math.PI/4 });
+                deltaWing.setPosition(0, 2.7, 0);
+                this.environment.addComponent(deltaWing);
+                this.currentAircraft.push(deltaWing);
+                
+                // 创建垂直尾翼
+                const verticalTail = new Wing({ span: 3, chord: 1.5 });
+                verticalTail.setRotation(Math.PI/2, 0, 0);
+                verticalTail.setPosition(0, 4, -4);
+                this.environment.addComponent(verticalTail);
+                this.currentAircraft.push(verticalTail);
+                
+                // 创建加力引擎
+                const engine = new Engine({ thrust: 2000, diameter: 0.6, length: 4 });
+                engine.setPosition(0, 2.2, 2);
+                this.environment.addComponent(engine);
+                this.currentAircraft.push(engine);
+            }
+
+            createCustomAircraft() {
+                this.currentAircraft = [];
+                // 自定义模式，用户可以手动添加组件
+                this.updateAircraftInfo();
+            }
+
+            clearAircraft() {
+                if (this.currentAircraft) {
+                    this.currentAircraft.forEach(component => {
+                        this.environment.removeComponent(component);
+                    });
+                }
+                this.currentAircraft = [];
+                this.updateAircraftInfo();
+            }
+
+            updateAircraftInfo() {
+                const infoElement = document.getElementById('aircraft-info');
+                if (this.currentAircraft && this.currentAircraft.length > 0) {
+                    const componentCount = this.currentAircraft.length;
+                    const presetName = this.getCurrentPresetName();
+                    
+                    infoElement.innerHTML = `
+                        <strong>飞机信息:</strong><br>
+                        预设: ${presetName}<br>
+                        组件数量: ${componentCount}<br>
+                        状态: 展示中
+                    `;
+                } else {
+                    infoElement.innerHTML = `
+                        <strong>飞机信息:</strong><br>
+                        未加载飞机
+                    `;
+                }
+            }
+
+            getCurrentPresetName() {
+                // 根据组件配置判断当前预设
+                if (this.currentAircraft.length === 4) {
+                    return '基础飞机';
+                } else if (this.currentAircraft.length === 5) {
+                    return '高级飞机';
+                } else if (this.currentAircraft.length === 4) {
+                    return '战斗机';
+                }
+                return '自定义';
+            }
+
+            updatePresetSelection(presetId) {
+                const items = document.querySelectorAll('.preset-item');
+                items.forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                const activeItem = Array.from(items).find(item => 
+                    item.querySelector('.preset-name').textContent === 
+                    this.getPresetNameById(presetId)
+                );
+                
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                }
+            }
+
+            getPresetNameById(presetId) {
+                const presetNames = {
+                    'basic': '基础飞机',
+                    'advanced': '高级飞机',
+                    'fighter': '战斗机',
+                    'custom': '自定义'
+                };
+                return presetNames[presetId] || '未知';
+            }
+
+            toggleAutoRotate() {
+                this.autoRotate = !this.autoRotate;
+                const button = document.querySelector('[onclick="toggleAutoRotate()"]');
+                button.textContent = this.autoRotate ? '停止旋转' : '自动旋转';
+                
+                if (this.autoRotate) {
+                    this.startAutoRotation();
+                }
+            }
+
+            startAutoRotation() {
+                const animate = () => {
+                    if (this.autoRotate && this.environment.cameraController.getControls()) {
+                        const controls = this.environment.cameraController.getControls();
+                        controls.autoRotate = true;
+                        controls.autoRotateSpeed = this.autoRotateSpeed;
+                    }
+                    
+                    if (this.autoRotate) {
+                        requestAnimationFrame(() => this.startAutoRotation());
+                    }
+                };
+                animate();
+            }
+
+            stopAutoRotation() {
+                this.autoRotate = false;
+                if (this.environment.cameraController.getControls()) {
+                    this.environment.cameraController.getControls().autoRotate = false;
+                }
+            }
+
+            dispose() {
+                this.stopAutoRotation();
+                this.clearAircraft();
+                if (this.environment) {
+                    this.environment.dispose();
+                }
+            }
+        }
+
+        // 全局函数
+        let staticShowcase;
+
+        function init() {
+            staticShowcase = new StaticShowcase();
+        }
+
+        function loadPreset(presetId) {
+            if (staticShowcase) staticShowcase.loadPreset(presetId);
+        }
+
+        function clearAircraft() {
+            if (staticShowcase) staticShowcase.clearAircraft();
+        }
+
+        function toggleGrid() {
+            if (staticShowcase && staticShowcase.environment) {
+                staticShowcase.environment.groundPlane.toggleGrid();
+            }
+        }
+
+        function toggleAxes() {
+            // 切换坐标轴显示（需要扩展DebugUtils功能）
+            console.log('切换坐标轴显示');
+        }
+
+        function toggleAutoRotate() {
+            if (staticShowcase) staticShowcase.toggleAutoRotate();
+        }
+
+        function updateLighting() {
+            // 更新光照设置（需要扩展环境设置功能）
+            console.log('更新光照设置');
+        }
+
+        function updateBackground() {
+            // 更新背景设置（需要扩展环境设置功能）
+            console.log('更新背景设置');
+        }
+
+        function goToPhysicsView() {
+            window.location.href = 'physics-builder.html';
+        }
+
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', init);
+        
+        // 清理资源
+        window.addEventListener('beforeunload', () => {
+            if (staticShowcase) staticShowcase.dispose();
+        });
+    </script>
+</body>
+</html>

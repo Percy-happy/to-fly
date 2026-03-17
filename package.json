@@ -1,0 +1,30 @@
+{
+  "name": "fly-3d-builder",
+  "version": "1.0.0",
+  "description": "飞行器3D搭建项目 - 包含物理和静态两个3D界面",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .js,.html",
+    "lint:fix": "eslint src --ext .js,.html --fix",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "sass": "^1.60.0"
+  },
+  "dependencies": {
+    "axios": "^1.5.0",
+    "three": "^0.158.0",
+    "cannon-es": "^0.20.0",
+    "dat.gui": "^0.7.9"
+  },
+  "keywords": ["3d", "flight", "builder", "physics", "threejs", "cannon"],
+  "author": "Your Name",
+  "license": "MIT"
+}
